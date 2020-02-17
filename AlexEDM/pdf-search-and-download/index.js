@@ -2,10 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const axios = require('axios');
-const { JSDOM } = require('jsdom');
 
-// file extension we wanna download
-const regex = /invoice\.pdf$/;
 // URL for search endpoint
 const searchUrl = 'http://words2.wordss.com:8080/SEARCH.ASP';
 // HTTP method of the search endpoint
@@ -33,7 +30,7 @@ function handleSearchRequest(searchTerm) {
             console.log(`Searching: ${searchTerm}`);
             const result = await axios.request(searchUrl, {
                 method: searchMethod,
-                params: {
+                data: {
                     [searchParamName]: searchTerm
                 }
             });
@@ -46,15 +43,13 @@ function handleSearchRequest(searchTerm) {
     });
 }
 
+const codeRegex = /<a[^>]*?javascript:NAF\('(.*?invoice\.pdf)'.*?\)[^>]*?>/ig;
 function parseSearchResults(result) {
-    const dom = new JSDOM(result, { url: searchUrl });
-    const links = dom.window.document.querySelectorAll('a');
+    let match = codeRegex.exec(result);
 
-    console.log(`Got search results with ${links.length} links`);
-    for (let i = 0; i < links.length; i++) {
-        if (links[i].href.match(regex)) {
-            downloadFile(links[i].href);
-        }
+    while (match !== null) {
+        downloadFile(match[1]);
+        codeRegex.exec(result);
     }
 }
 
