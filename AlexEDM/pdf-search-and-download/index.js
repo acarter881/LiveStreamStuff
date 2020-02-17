@@ -9,9 +9,9 @@ const regex = /\.pdf$/;
 // URL for search endpoint
 const searchUrl = 'http://words2.wordss.com:8080/SEARCH.ASP';
 // HTTP method of the search endpoint
-const searchMethod = 'get';
+const searchMethod = 'post';
 // query paramater name for search endpoint (e.g. 'q' for https://www.google.com/search/?q=searchterm)
-const searchParamName = 'q';
+const searchParamName = 'SearchString';
 // list of search terms we want to send to the search endpoint
 const searchTerms = [
     '12554898',
