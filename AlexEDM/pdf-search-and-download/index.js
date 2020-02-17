@@ -5,7 +5,7 @@ const axios = require('axios');
 const { JSDOM } = require('jsdom');
 
 // file extension we wanna download
-const regex = /\.pdf$/;
+const regex = /invoice\.pdf$/;
 // URL for search endpoint
 const searchUrl = 'http://words2.wordss.com:8080/SEARCH.ASP';
 // HTTP method of the search endpoint
@@ -16,7 +16,7 @@ const searchParamName = 'SearchString';
 const searchTerms = [
     '12554898',
     '23654895',
-    '32564985 ',
+    '32564985',
 ];
 
 sendSearchRequest(searchTerms).catch(console.error);
@@ -61,6 +61,6 @@ function parseSearchResults(result) {
 function downloadFile(url) {
     console.log(`Downloading file: ${path.basename(url)}`);
     const filename = path.basename(url).replace(':', '_');
-    const file = fs.createWriteStream(path.resolve(__dirname, 'downloads', filename));
+    const file = fs.createWriteStream(path.resolve('C:\\Users\\YOUR_ACCOUNT\\Desktop', filename));
     http.get(url, (response => response.pipe(file)));
 }
