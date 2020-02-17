@@ -1,0 +1,13 @@
+{
+  "name": "pdf-search-and-download",
+  "version": "1.0.0",
+  "description": "small script to parse search results for pdf links and download those pdf files",
+  "main": "index.js",
+  "author": "MackTheKnife",
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "axios": "^0.19.2",
+    "jsdom": "^16.1.0"
+  }
+}
