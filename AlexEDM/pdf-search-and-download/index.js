@@ -7,7 +7,7 @@ const axios = require("axios");
 const searchUrl = "http://words2.wordss.com:8080/SEARCH.ASP";
 // HTTP method of the search endpoint
 const searchMethod = "post";
-// query paramater name for search endpoint (e.g. 'q' for https://www.google.com/search/?q=searchterm)
+// query parameter name for search endpoint (e.g., 'q' for https://www.google.com/search/?q=searchterm)
 const searchParamName = "SearchString";
 // list of search terms we want to send to the search endpoint
 const searchTerms = ["12554898", "23654895", "32564985"];
