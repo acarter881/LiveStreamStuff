@@ -27,7 +27,8 @@ function handleSearchRequest(searchTerm) {
       const result = await axios.request(searchUrl, {
         method: searchMethod,
         data: {
-          [searchParamName]: searchTerm
+          [searchParamName]: searchTerm,
+          Action: 1
         }
       });
 
