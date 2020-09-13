@@ -5,7 +5,7 @@ const axios = require("axios");
 // URL for search endpoint
 const searchUrl = "http://example.com:8080/SEARCH.ASP";
 // HTTP method of the search endpoint
-const searchMethod = "post";
+const searchMethod = "get";
 
 const inputFileName = "list.txt";
 
@@ -61,6 +61,8 @@ function parseSearchResults(result, searchTerm, page) {
     const nextRegex = /"Next 10 documents"/im;
     let lastLink = '';
     let found = false;
+
+    console.log(`Searching on page: ${page}`);
 
     while (match = codeRegex.exec(result)) {
         const link = match[1];
