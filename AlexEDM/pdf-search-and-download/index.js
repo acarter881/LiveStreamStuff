@@ -4,7 +4,7 @@ const http = require("http");
 const axios = require("axios");
 
 // URL for search endpoint
-const searchUrl = "http://example.com:8080/SEARCH.ASP";
+const searchUrl = "http://covga2.crbard.com:8080/SEARCH.ASP";
 // HTTP method of the search endpoint
 const searchMethod = "post";
 // query parameter name for search endpoint (e.g., 'q' for https://www.google.com/search/?q=searchterm)
@@ -16,36 +16,39 @@ const searchTerms = fs
   .readFileSync(path.join(__dirname, inputFileName))
   .toString()
   .trim()
-  .split("\n")
+  .split('\n')
   .map(term => term.trim());
 
 sendSearchRequest(searchTerms)
-  .then(() => {
-    console.log(`Total Searchterms: ${searchTerms.length}`);
-    console.log("No files found for the following number:");
-    filesNotFound.forEach(term => console.log(term));
-  })
-  .catch(console.error);
+	.then(() => {
+		console.log(`Total Searchterms: ${searchTerms.length}`);
+		console.log('No files found for the following number:');
+		filesNotFound.forEach(term => console.log(term));
+	})
+	.catch(console.error);
 
 const filesNotFound = [];
+
+const wait = async (timeout) => new Promise((resolve) => setTimeout(resolve, timeout));
 
 async function sendSearchRequest(searchTerms) {
   for (searchTerm of searchTerms) {
     await handleSearchRequest(searchTerm);
+	await wait(400);
   }
 }
 
 function handleSearchRequest(searchTerm) {
-  if (!searchTerm) {
-    return;
-  }
-
+	if (!searchTerm) {
+		return;
+	}
+	
   return new Promise(async (resolve, reject) => {
     try {
       console.log(`Searching: ${searchTerm}`);
       const result = await axios.request(searchUrl, {
         method: searchMethod,
-        data: `${searchParamName}=${searchTerm}&Action=Go`
+        data: `${searchParamName}=${searchTerm}&Action=Go` 
       });
 
       parseSearchResults(result.data, searchTerm);
@@ -57,24 +60,21 @@ function handleSearchRequest(searchTerm) {
 }
 
 function parseSearchResults(result, searchTerm) {
-  const codeRegex = new RegExp(
-    `<a[^>]*?javascript:NAF\\('(.*?${searchTerm}.*?(?:invoice|credit memo)\\.pdf)'.*?\\)[^>]*?>`,
-    "gi"
-  );
-  let lastLink = "";
-  let found = false;
-
-  while ((match = codeRegex.exec(result))) {
-    const link = match[1];
-    if (link != lastLink) {
-      downloadFile(match[1]);
-      found = true;
-      lastLink = link;
-    }
+	const codeRegex = new RegExp(`<a[^>]*?javascript:NAF\\('(.*?${searchTerm}.*?(?:invoice|credit memo)\\.pdf)'.*?\\)[^>]*?>`, 'gi');
+	let lastLink = '';
+	let found = false;
+	
+  while (match = codeRegex.exec(result)) {
+	  const link = match[1];
+	  if (link != lastLink) {
+		downloadFile(match[1]);
+		found = true;
+		lastLink = link;
+	  }
   }
-
+  
   if (!found) {
-    filesNotFound.push(searchTerm);
+	  filesNotFound.push(searchTerm);
   }
 }
 
@@ -82,17 +82,17 @@ async function downloadFile(url) {
   console.log(`Downloading file: ${path.basename(url)}`);
   const filename = path.basename(url).replace(":", "_");
   const file = fs.createWriteStream(path.join(__dirname, "download", filename));
-
+  
   const response = await axios.request({
-    url,
-    method: "GET",
-    responseType: "stream"
+	  url,
+	  method: 'GET',
+	  responseType: 'stream',
   });
-
+  
   response.data.pipe(file);
-
+  
   return new Promise((resolve, reject) => {
-    file.on("finish", resolve);
-    file.on("error", reject);
+	  file.on('finish', resolve);
+	  file.on('error', reject);
   });
 }
