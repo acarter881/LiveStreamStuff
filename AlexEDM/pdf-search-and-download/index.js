@@ -5,9 +5,11 @@ const axios = require("axios");
 // URL for search endpoint
 const searchUrl = "http://example.com:8080/SEARCH.ASP";
 // HTTP method of the search endpoint
-const searchMethod = "post";
+const searchMethod = "get";
 
 const inputFileName = "list.txt";
+
+let cookie;
 
 const searchTerms = fs
     .readFileSync(path.join(__dirname, inputFileName))
@@ -40,10 +42,30 @@ async function handleSearchRequest(searchTerm, page = 1) {
         return;
     }
 
+    const cookieResult = await axios.request(searchUrl, {
+        method: 'post',
+        data: `SearchString=${searchTerm}&Action=Go`
+    });
+    const cookieRegExp = /^(.*?);/im;
+    cookie = cookieRegExp.exec(cookieResult.headers['set-cookie'][0])[1];
+
     console.log(`Searching: ${searchTerm}`);
-    const result = await axios.request(searchUrl, {
+    const result = await axios.request(`${searchUrl}?qu=${searchTerm}&Advanced=&sc=%2F&pg=${page}&RankBase=1000`, {
         method: searchMethod,
-        data: `qu=${searchTerm}&Advanced=&sc=%2F&pg=${page}&RankBase=1000`
+        headers: {
+            Cookie: `${cookie}`
+        }
+    });
+
+    return parseSearchResults(result.data, searchTerm, page);
+}
+
+async function continueSearchRequest(searchTerm, page) {
+    const result = await axios.request(`${searchUrl}?qu=${searchTerm}&Advanced=&sc=%2F&pg=${page}&RankBase=1000`, {
+        method: searchMethod,
+        headers: {
+            Cookie: `${cookie}`
+        }
     });
 
     return parseSearchResults(result.data, searchTerm, page);
@@ -51,7 +73,7 @@ async function handleSearchRequest(searchTerm, page = 1) {
 
 async function parseSearchResults(result, searchTerm, page) {
     const codeRegex = new RegExp(`<a[^>]*?javascript:NAF\\('(.*?${searchTerm}.*?(?:invoice|credit memo)\\.pdf)'.*?\\)[^>]*?>`, 'gi');
-    const nextRegex = /"Next 10 documents"/im;
+    const nextRegex = /"Next \d.*? documents"/im;
     let lastLink = '';
     let found = false;
 
@@ -66,8 +88,8 @@ async function parseSearchResults(result, searchTerm, page) {
         }
     }
 
-    if (nextRegex.test(result)) {
-        return handleSearchRequest(searchTerm, page + 1);
+    if (!found && nextRegex.test(result)) {
+        return continueSearchRequest(searchTerm, page + 1);
     }
 
     if (!found) {
