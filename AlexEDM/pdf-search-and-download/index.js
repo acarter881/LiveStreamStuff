@@ -5,7 +5,7 @@ const axios = require("axios");
 // URL for search endpoint
 const searchUrl = "http://example.com:8080/SEARCH.ASP";
 // HTTP method of the search endpoint
-const searchMethod = "get";
+const searchMethod = "post";
 
 const inputFileName = "list.txt";
 
@@ -29,34 +29,27 @@ const filesNotFound = [];
 const wait = async (timeout) => new Promise((resolve) => setTimeout(resolve, timeout));
 
 async function sendSearchRequest(searchTerms) {
-    for (searchTerm of searchTerms) {
+    for (const searchTerm of searchTerms) {
         await handleSearchRequest(searchTerm);
         await wait(400);
     }
 }
 
-function handleSearchRequest(searchTerm, page = 1) {
+async function handleSearchRequest(searchTerm, page = 1) {
     if (!searchTerm) {
         return;
     }
 
-    return new Promise(async (resolve, reject) => {
-        try {
-            console.log(`Searching: ${searchTerm}`);
-            const result = await axios.request(searchUrl, {
-                method: searchMethod,
-                data: `qu=${searchTerm}&Advanced=&sc=%2F&pg=${page}&RankBase=1000`
-            });
-
-            parseSearchResults(result.data, searchTerm, page);
-            return resolve();
-        } catch (err) {
-            return reject(err);
-        }
+    console.log(`Searching: ${searchTerm}`);
+    const result = await axios.request(searchUrl, {
+        method: searchMethod,
+        data: `qu=${searchTerm}&Advanced=&sc=%2F&pg=${page}&RankBase=1000`
     });
+
+    return parseSearchResults(result.data, searchTerm, page);
 }
 
-function parseSearchResults(result, searchTerm, page) {
+async function parseSearchResults(result, searchTerm, page) {
     const codeRegex = new RegExp(`<a[^>]*?javascript:NAF\\('(.*?${searchTerm}.*?(?:invoice|credit memo)\\.pdf)'.*?\\)[^>]*?>`, 'gi');
     const nextRegex = /"Next 10 documents"/im;
     let lastLink = '';
@@ -67,7 +60,7 @@ function parseSearchResults(result, searchTerm, page) {
     while (match = codeRegex.exec(result)) {
         const link = match[1];
         if (link != lastLink) {
-            downloadFile(match[1]);
+            await downloadFile(match[1]);
             found = true;
             lastLink = link;
         }
