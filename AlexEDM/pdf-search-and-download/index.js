@@ -5,9 +5,11 @@ const axios = require("axios");
 // URL for search endpoint
 const searchUrl = "http://example.com:8080/SEARCH.ASP";
 // HTTP method of the search endpoint
-const searchMethod = "post";
+const searchMethod = "get";
 
 const inputFileName = "list.txt";
+
+let cookie;
 
 const searchTerms = fs
     .readFileSync(path.join(__dirname, inputFileName))
@@ -31,7 +33,7 @@ const wait = async (timeout) => new Promise((resolve) => setTimeout(resolve, tim
 async function sendSearchRequest(searchTerms) {
     for (const searchTerm of searchTerms) {
         await handleSearchRequest(searchTerm);
-        await wait(400);
+        await wait(300);
     }
 }
 
@@ -40,18 +42,47 @@ async function handleSearchRequest(searchTerm, page = 1) {
         return;
     }
 
-    console.log(`Searching: ${searchTerm}`);
-    const result = await axios.request(searchUrl, {
-        method: searchMethod,
-        data: `qu=${searchTerm}&Advanced=&sc=%2F&pg=${page}&RankBase=1000`
+    const cookieResult = await axios.request(searchUrl, {
+        method: 'post',
+        data: `SearchString=${searchTerm}&Action=Go`
     });
+    const cookieRegExp = /^(.*?);/im;
+    cookie = cookieRegExp.exec(cookieResult.headers['set-cookie'][0])[1];
 
-    return parseSearchResults(result.data, searchTerm, page);
+    console.log(`Searching: ${searchTerm}`);
+	try {
+		const result = await axios.request(`${searchUrl}?qu=${searchTerm}&Advanced=&sc=%2F&pg=${page}&RankBase=1000`, {
+			method: searchMethod,
+			headers: {
+				Cookie: `${cookie}`
+			}
+		});
+
+		return parseSearchResults(result.data, searchTerm, page);
+	} catch(error) {
+		//console.log('Request failed! Trying alternative method.');
+		return parseSearchResults(cookieResult.data, searchTerm, page);
+	}
+}
+
+async function continueSearchRequest(searchTerm, page) {
+	try {
+		const result = await axios.request(`${searchUrl}?qu=${searchTerm}&Advanced=&sc=%2F&pg=${page}&RankBase=1000`, {
+			method: searchMethod,
+			headers: {
+				Cookie: `${cookie}`
+			}
+		});
+
+		return parseSearchResults(result.data, searchTerm, page);
+	} catch(error) {
+		console.error('Request failed!');
+	}
 }
 
 async function parseSearchResults(result, searchTerm, page) {
     const codeRegex = new RegExp(`<a[^>]*?javascript:NAF\\('(.*?${searchTerm}.*?(?:invoice|credit memo)\\.pdf)'.*?\\)[^>]*?>`, 'gi');
-    const nextRegex = /"Next 10 documents"/im;
+    const nextRegex = /"Next \d.*? documents"/im;
     let lastLink = '';
     let found = false;
 
@@ -66,8 +97,8 @@ async function parseSearchResults(result, searchTerm, page) {
         }
     }
 
-    if (nextRegex.test(result)) {
-        return handleSearchRequest(searchTerm, page + 1);
+    if (!found && nextRegex.test(result)) {
+        return continueSearchRequest(searchTerm, page + 1);
     }
 
     if (!found) {
