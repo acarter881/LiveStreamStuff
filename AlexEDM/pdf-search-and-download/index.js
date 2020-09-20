@@ -50,19 +50,19 @@ async function handleSearchRequest(searchTerm, page = 1) {
     cookie = cookieRegExp.exec(cookieResult.headers['set-cookie'][0])[1];
 
     console.log(`Searching: ${searchTerm}`);
-	try {
-		const result = await axios.request(`${searchUrl}?qu=${searchTerm}&Advanced=&sc=%2F&pg=${page}&RankBase=1000`, {
-			method: searchMethod,
-			headers: {
-				Cookie: `${cookie}`
-			}
-		});
+    try {
+      const result = await axios.request(`${searchUrl}?qu=${searchTerm}&Advanced=&sc=%2F&pg=${page}&RankBase=1000`, {
+        method: searchMethod,
+        headers: {
+          Cookie: `${cookie}`
+        }
+      });
 
-		return parseSearchResults(result.data, searchTerm, page);
-	} catch(error) {
-		//console.log('Request failed! Trying alternative method.');
-		return parseSearchResults(cookieResult.data, searchTerm, page);
-	}
+      return parseSearchResults(result.data, searchTerm, page);
+    } catch(error) {
+      //console.log('Request failed! Trying alternative method.');
+      return parseSearchResults(cookieResult.data, searchTerm, page);
+    }
 }
 
 async function continueSearchRequest(searchTerm, page) {
